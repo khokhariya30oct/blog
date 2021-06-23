@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext,useEffect } from 'react';
 import { Text, View, StyleSheet, FlatList, Button, TouchableOpacity } from 'react-native';
 import { Context as BlogContext } from '../context/BlogContext';
 import { Feather } from '@expo/vector-icons';
@@ -6,11 +6,26 @@ import { Feather } from '@expo/vector-icons';
 
 const IndexScreen = ({ navigation }) => {
 
-    const { state, addBlogPosts, deletePost } = useContext(BlogContext);
+    const { state, getBlogPost, deletePost } = useContext(BlogContext);
+
+    // get executed only once
+    useEffect(() => {
+        getBlogPost();
+
+        const listener = navigation.addListener('didFocus',() => {
+            getBlogPost();
+        })
+
+        // only gets executed when screen is going to completely de mount
+        return () => {
+            listener.remove();
+        };
+
+    },[]);
 
     return (
         <View>
-{/*
+            {/*
             <Button
                 title='Add Blog'
                 onPress={() => addBlogPosts()}

@@ -1,9 +1,14 @@
 import createDataContext  from '../context/createDataContext';
-
+import jsonserver from '../api/jsonserver';
+import axios from 'axios';
 
 
 const blogReducer = (state,action) => {
     switch(action.type) {
+
+        case 'GET_BLOGPOST' :
+            return action.payload;
+
         case 'ADD_BLOG':
             return [...state,{
                 id : Math.floor(Math.random() * 9999),
@@ -33,12 +38,19 @@ const blogReducer = (state,action) => {
     }
 }
 
-const deletePost = (dispatch) => {
-    return (id) => {
-        dispatch({type : 'DELETE_BOLG', payload : id})
+const getBlogPost = (dispatch) => {
+    return async () => {
+        const res = await jsonserver.get('/blogposts');
+        dispatch({type : 'GET_BLOGPOST',payload : res.data})
     }
 }
 
+const deletePost = (dispatch) => {
+    return async (id) => {
+        await jsonserver.delete(`/blogposts/${id}`);
+        dispatch({type : 'DELETE_BOLG', payload : id})
+    }
+}
 
 const addBlogPosts = (dispatch) => {
     return () => {
@@ -47,15 +59,21 @@ const addBlogPosts = (dispatch) => {
 }
 
 const addBlogPostDynamicContent = (dispatch) => {
-    return (title,content,callback) => {
-        dispatch({type : 'ADD_BLOG_DYNAMIC', payload : {title,content}});
-        callback();
+    return async (title,content,callback) => {
+        // dispatch({type : 'ADD_BLOG_DYNAMIC', payload : {title,content}});
+        // callback();
+        await jsonserver.post('/blogposts',{title,content});
+        if (callback){
+            callback();
+        }
+
     }
 }
 
 
 const updateBlogPost = (dispatch) => {
-    return (blog,callback) => {
+    return async (blog,callback) => {
+        await jsonserver.put(`/blogposts/${blog.id}`,{title : blog.title,content : blog.content});
         dispatch({type : 'UPDATE_BLOG_DYNAMIC',
             payload : {
                 id : blog.id,
@@ -63,13 +81,15 @@ const updateBlogPost = (dispatch) => {
                 content : blog.content
             }
         });
-        callback();
+        if(callback) {
+            callback();
+        }
     }
 }
 
 
 export const {Context,Provider} = createDataContext(
     blogReducer,
-    {addBlogPosts,deletePost,addBlogPostDynamicContent,updateBlogPost},
+    {getBlogPost,addBlogPosts,deletePost,addBlogPostDynamicContent,updateBlogPost},
     []
     );
